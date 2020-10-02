@@ -16,9 +16,10 @@ public class LanguageController {
     private final LanguageService languageService;
 
     @PostMapping("define")
-    public String getLanguageOfText(@RequestParam(value = "fileToDefine") MultipartFile file, Model model){
-        model.addAttribute("language", languageService.defineLanguage(file));
-        return "languagePage";
+    public String getLanguageOfText(@RequestParam(value = "fileToDefine") MultipartFile file, Model model) throws Exception {
+        model.addAttribute("searchResult", languageService.defineLanguage(file));
+
+        return "start";
     }
 
     @PostMapping("upload")

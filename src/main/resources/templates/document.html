@@ -1,8 +1,13 @@
-<html xmlns:th="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
 <body>
 <ul class="nav nav-tabs">
     <li class="nav-item" style="margin-right: 2px">
@@ -10,9 +15,19 @@
             Upload Terms
         </button>
     </li>
-    <li class="nav-item">
+    <li class="nav-item" style="margin-right: 2px">
         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#defineLanguage">
             Define Language
+        </button>
+    </li>
+    <li class="nav-item" style="margin-right: 2px">
+        <button type="button" onclick="printDiv('content')" class="btn btn-primary">
+            Print
+        </button>
+    </li>
+    <li class="nav-item" style="margin-right: 2px">
+        <button type="button" id="saveButton" class="btn btn-primary">
+            Save
         </button>
     </li>
 </ul>
@@ -71,38 +86,31 @@
 </div>
 
 
-
-<div class="container" style="margin-left: 200px">
-    <br/>
-    <div class="row justify-content-left">
-        <div class="col-12 col-md-10 col-lg-8">
-            <form class="card card-sm" action="/" method="post">
-                <div class="card-body row no-gutters align-items-center">
-                    <div class="col-auto">
-                        <i class="fas fa-search h4 text-body"></i>
-                    </div>
-                    <!--end of col-->
-                    <div class="col">
-                        <input class="form-control form-control-lg form-control-borderless" name="searchText" type="text" placeholder="Search topics or keywords">
-                    </div>
-                    <!--end of col-->
-                    <div class="col-auto">
-                        <button class="btn btn-lg btn-success" type="submit">Search</button>
-                    </div>
-                    <!--end of col-->
-                </div>
-            </form>
-        </div>
-        <!--end of col-->
+<div style="margin-top: 30px; margin-left: 200px; margin-right: 200px;" id="content">
+    <div>
+        <h3 th:text="${document.language}"></h3>
     </div>
-
-    <div th:if="${searchResult != null}" class="flex-row flex-md-row align-items-left p-3 mb-3 bg-white  shadow-sm border-top border-bottom border-left border-right row">
-        <a class="col" th:href="@{/document/{id}(id=${searchResult.document.id})}" th:text="${searchResult.document.title}" ></a>
-        <div class="w-100"></div>
-        <div class="col" th:text="${searchResult.snippet}"></div>
-        <div class="w-100"></div>
-        <div class="col" th:text="${searchResult.document.language}"></div>
-    </div>
+    <br>
+    <div th:text="${document.text}"/>
 </div>
 </body>
+
+<script>
+    a = document.createElement("a")
+    a.setAttribute("href", "data:text/plain," + content.innerHTML)
+    a.setAttribute("download", "content.txt")
+    let saveButton = document.getElementById("saveButton");
+    saveButton.onclick = function(){ a.click() }
+
+    function printDiv(divName) {
+        let printContents = document.getElementById(divName).innerHTML;
+        let originalContents = document.body.innerHTML;
+
+        document.body.innerHTML = printContents;
+
+        window.print();
+
+        document.body.innerHTML = originalContents;
+    }
+</script>
 </html>
