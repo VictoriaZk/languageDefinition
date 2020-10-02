@@ -24,14 +24,13 @@ public class LanguageServiceImpl implements LanguageService {
     public void uploadTermsLanguage(MultipartFile file, Language language) {
         String termsFile = getTextFromPdfFile(file);
         Set<String> terms = DocumentUtilsImpl.getTermOccurrences(termsFile);
-        terms.forEach(word -> {
-            wordRepository.findByWord(word)
-                    .orElse(wordRepository.save(
-                            Word.builder()
-                            .language(language)
-                            .word(word)
-                            .build()));
-        });
+        terms.forEach(word ->
+                wordRepository.findByWordAndLanguage(word, language)
+                .orElse(wordRepository.save(
+                        Word.builder()
+                        .language(language)
+                        .word(word)
+                        .build())));
     }
 
     @Override
@@ -45,11 +44,9 @@ public class LanguageServiceImpl implements LanguageService {
 
         Set<String> termRequest = DocumentUtilsImpl.getTermOccurrences(fullText);
 
-        termRequest.forEach(word -> {
-            wordRepository.findByWord(word).ifPresent(term -> {
-                termsOccurrences.computeIfPresent(term.getLanguage(), (key, value) -> value + 1);
-            });
-        });
+        termRequest.forEach(word ->
+                wordRepository.findAllByWord(word).forEach(term ->
+                        termsOccurrences.computeIfPresent(term.getLanguage(), (key, value) -> value + 1)));
         try {
             return termsOccurrences.entrySet()
                     .stream().max(Map.Entry.comparingByValue())
