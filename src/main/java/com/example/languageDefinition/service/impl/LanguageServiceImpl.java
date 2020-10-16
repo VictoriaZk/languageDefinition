@@ -20,6 +20,7 @@ import java.util.*;
 @Service
 public class LanguageServiceImpl implements LanguageService {
     private static final int maxLengthSnippet = 300;
+    private static final double minFrequency = 0.01;
     private final String PATH = System.getProperty("user.dir") + "/files";
 
     private final WordRepository wordRepository;
@@ -31,9 +32,9 @@ public class LanguageServiceImpl implements LanguageService {
         String termsFile = getTextFromPdfFile(file);
         Map<String, Double> termsProbability = null;
         if(method == Method.FREQUENCY_WORDS) {
-            DocumentUtilsImpl.getTermOccurrencesFrequencyWordMethod(termsFile);
+            termsProbability = DocumentUtilsImpl.getTermsFrequencyWordMethod(termsFile);
         }else if(method == Method.SHORT_WORDS){
-            DocumentUtilsImpl.getTermOccurrencesShortWordMethod(termsFile);
+            termsProbability = DocumentUtilsImpl.getTermsShortWordMethod(termsFile);
         }
 
         termsProbability.forEach((word, probability) ->
@@ -41,21 +42,31 @@ public class LanguageServiceImpl implements LanguageService {
                 .orElse(wordRepository.save(
                         Word.builder()
                         .language(language)
+                        .method(method)
                         .word(word)
                         .probability(probability)
                         .build())));
     }
 
     @Override
-    public SearchResult defineLanguage(MultipartFile file) {
+    public SearchResult defineLanguage(MultipartFile file, Method method) {
         String fullText = getTextFromPdfFile(file);
         saveFileStorage(file);
+
+        Language language = null;
+        if(method == Method.FREQUENCY_WORDS){
+            language = defineByFrequencyWordsMethod(fullText);
+        }else if(method == Method.SHORT_WORDS){
+            language = defineByShortWordsMethod(fullText);
+        }else if(method == Method.OWN_METHOD){
+            language = defineByOwnMethod(fullText);
+        }
 
         Document document = documentService.save(
                 Document.builder()
                         .title(file.getOriginalFilename())
                         .text(fullText)
-                        .language(defineByFrequencyWordsMethod(fullText))
+                        .language(language)
                         .build());
 
         return SearchResult.builder()
@@ -69,19 +80,33 @@ public class LanguageServiceImpl implements LanguageService {
     @Override
     public Language defineByShortWordsMethod(String text) {
         HashMap<Language, Double> termsOccurrences = new HashMap<>();
-        termsOccurrences.put(Language.RUSSIAN, 0D);
-        termsOccurrences.put(Language.ENGLISH, 0D);
+        termsOccurrences.put(Language.RUSSIAN, Math.pow(100, 150D));
+        termsOccurrences.put(Language.ENGLISH, Math.pow(100, 150D));
 
-        Set<String> termRequest = DocumentUtilsImpl.getTermOccurrences(text);
+        Set<String> termRequest = DocumentUtilsImpl.getAllTerms(text);
 
         termRequest.forEach(word ->
-                wordRepository.findAllByWord(word)
-                        .forEach(term -> termsOccurrences.computeIfPresent(term.getLanguage(),
-                                (key, value) -> value + term.getProbability())));
+        {
+            termsOccurrences.computeIfPresent(Language.ENGLISH,
+                    (key, value) -> value * getTermProbability(word, Method.SHORT_WORDS, Language.ENGLISH));
+
+            termsOccurrences.computeIfPresent(Language.RUSSIAN,
+                    (key, value) -> value * getTermProbability(word, Method.SHORT_WORDS, Language.RUSSIAN));
+        });
 
         return termsOccurrences.entrySet()
                 .stream().max(Map.Entry.comparingByValue()).filter(entry -> entry.getValue() != 0)
                 .orElse(new AbstractMap.SimpleEntry<>(Language.UNDEFINED, 0D)).getKey();
+    }
+
+    private Double getTermProbability(String word, Method method, Language language){
+        Optional<Word> englishTerm = wordRepository
+                .findByWordAndMethodAndLanguage(word, method, language);
+        if(englishTerm.isPresent()){
+            return englishTerm.get().getProbability();
+        }else {
+            return minFrequency;
+        }
     }
 
     @Override
@@ -90,11 +115,13 @@ public class LanguageServiceImpl implements LanguageService {
         termsOccurrences.put(Language.RUSSIAN, 0D);
         termsOccurrences.put(Language.ENGLISH, 0D);
 
-        Set<String> termRequest = DocumentUtilsImpl.getTermOccurrences(text);
+        Set<String> termRequest = DocumentUtilsImpl.getAllTerms(text);
 
         termRequest.forEach(word ->
                 wordRepository.findAllByWordAndMethod(word, Method.FREQUENCY_WORDS).forEach(term ->
-                        termsOccurrences.computeIfPresent(term.getLanguage(), (key, value) -> value + term.getProbability())));
+                        termsOccurrences.computeIfPresent(term.getLanguage(),
+                                (key, value) -> value + term.getProbability())));
+
         return termsOccurrences.entrySet()
                 .stream().max(Map.Entry.comparingByValue()).filter(entry -> entry.getValue() != 0)
                 .orElse(new AbstractMap.SimpleEntry<>(Language.UNDEFINED, 0D)).getKey();
@@ -102,7 +129,12 @@ public class LanguageServiceImpl implements LanguageService {
 
     @Override
     public Language defineByOwnMethod(String text) {
-        return null;
+        if(text.replaceAll("[A-Z]|[a-z]", "").length() < text.length() / 2){
+            return Language.ENGLISH;
+        }else if(text.replaceAll("[А-Я]|[а-я]", "").length() < text.length() / 2){
+            return Language.RUSSIAN;
+        }
+        return Language.UNDEFINED;
     }
 
     private String getTextFromPdfFile(MultipartFile file){

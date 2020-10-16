@@ -12,4 +12,5 @@ import lombok.NoArgsConstructor;
 public class SearchResult {
     private Document document;
     private String snippet;
+    private Double probability;
 }

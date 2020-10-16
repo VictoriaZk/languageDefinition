@@ -17,8 +17,10 @@ public class LanguageController {
     private final LanguageService languageService;
 
     @PostMapping("define")
-    public String getLanguageOfText(@RequestParam(value = "fileToDefine") MultipartFile file, Model model) throws Exception {
-        model.addAttribute("searchResult", languageService.defineLanguage(file));
+    public String getLanguageOfText(@RequestParam(value = "fileToDefine") MultipartFile file,
+                                    @RequestParam(value = "selectedMethodDefine") Method method,
+                                    Model model) throws Exception {
+        model.addAttribute("searchResult", languageService.defineLanguage(file, method));
 
         return "start";
     }
@@ -26,7 +28,7 @@ public class LanguageController {
     @PostMapping("upload")
     public String uploadTermsOfLanguage(@RequestParam(value = "fileToUpload") MultipartFile file,
                                         @RequestParam(value = "selectedLanguage")String language,
-                                        @RequestParam(value = "selectMethod") String method){
+                                        @RequestParam(value = "selectedMethod") String method){
         languageService.uploadTermsLanguage(file, Language.valueOf(language), Method.valueOf(method));
 
         return "redirect:/";

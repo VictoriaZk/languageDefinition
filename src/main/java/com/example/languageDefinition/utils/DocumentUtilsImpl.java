@@ -13,15 +13,18 @@ public class DocumentUtilsImpl{
                 .replaceAll("\n", " ")
                 .replaceAll("  ( )*", " ").toLowerCase();
     }
-    public  static Set<String> getTermOccurrences(String text) {
+
+    public static String[] getSplitWords(String text){
+        return getCleanText(text).split(" ");
+    }
+    public  static Set<String> getAllTerms(String text) {
         String[] words = getCleanText(text).split(" ");
 
         return Arrays.stream(words).collect(Collectors.toSet());
     }
 
+    public static Map<String, Integer> getTermsOccurrences(String[] words){
 
-    public static Map<String, Double> getTermOccurrencesFrequencyWordMethod(String text) {
-        String[] words = getCleanText(text).split(" ");
         Map<String, Integer> initialForms = new HashMap<>();
 
         for (String word : words) {
@@ -33,28 +36,29 @@ public class DocumentUtilsImpl{
             }
         }
 
-        return initialForms.entrySet().stream()
-                .filter(entrySet -> entrySet.getValue() > 1)
-                .collect(Collectors.toMap(Map.Entry::getKey,
-                        entry -> Double.valueOf(entry.getValue()) / words.length));
+        return initialForms;
     }
 
-    public static Map<String, Double> getTermOccurrencesShortWordMethod(String text) {
-        String[] words = getCleanText(text).split(" ");
-        Map<String, Integer> initialForms = new HashMap<>();
-
-        for (String word : words) {
-
-            if (initialForms.containsKey(word)) {
-                initialForms.put(word, initialForms.get(word) + 1);
-            } else {
-                initialForms.put(word, 1);
-            }
-        }
-
-        return initialForms.entrySet().stream()
+    public static Map<String, Double> getTermsFrequencyWordMethod(String text) {
+        String[] allWords = getSplitWords(text);
+        Map<String, Integer> termsOccurrences = getTermsOccurrences(allWords);
+        return termsOccurrences.entrySet().stream()
                 .filter(entrySet -> entrySet.getValue() > 1)
                 .collect(Collectors.toMap(Map.Entry::getKey,
-                        entry -> Double.valueOf(entry.getValue()) / words.length));
+                        entry -> Double.valueOf(entry.getValue()) / allWords.length));
+    }
+
+    public static Map<String, Double> getTermsShortWordMethod(String text) {
+        String[] allWords = getSplitWords(text);
+        Map<String, Integer> shortWordsTerms =
+                getTermsOccurrences(allWords).entrySet().stream().filter(entrySet ->
+                        entrySet.getKey().length() < 5 && entrySet.getValue() > 3)
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        int sumFrequencies = shortWordsTerms.values().stream().mapToInt(value -> value).sum();
+
+        return shortWordsTerms.entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey,
+                                entry -> Double.valueOf(entry.getValue()) / sumFrequencies));
     }
 }

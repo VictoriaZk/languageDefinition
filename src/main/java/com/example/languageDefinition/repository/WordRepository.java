@@ -13,5 +13,7 @@ public interface WordRepository extends JpaRepository<Word, Long> {
 
     List<Word> findAllByWordAndMethod(String word, Method method);
 
+    Optional<Word> findByWordAndMethodAndLanguage(String word, Method method, Language language);
+
     Optional<Word> findByWordAndLanguage(String word, Language language);
 }
