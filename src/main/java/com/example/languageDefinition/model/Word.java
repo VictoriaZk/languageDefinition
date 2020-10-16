@@ -18,10 +18,13 @@ public class Word {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long Id;
 
-    @Column
     private String word;
 
-    @Column
+    Double probability;
+
     @Enumerated(EnumType.STRING)
     private Language language;
+
+    @Enumerated(EnumType.STRING)
+    private Method method;
 }

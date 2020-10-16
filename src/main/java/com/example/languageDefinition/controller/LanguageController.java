@@ -1,6 +1,7 @@
 package com.example.languageDefinition.controller;
 
 import com.example.languageDefinition.model.Language;
+import com.example.languageDefinition.model.Method;
 import com.example.languageDefinition.service.LanguageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -10,7 +11,7 @@ import org.springframework.ui.Model;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/")
+@RequestMapping()
 public class LanguageController {
 
     private final LanguageService languageService;
@@ -24,8 +25,9 @@ public class LanguageController {
 
     @PostMapping("upload")
     public String uploadTermsOfLanguage(@RequestParam(value = "fileToUpload") MultipartFile file,
-                                        @RequestParam(value = "selectedLanguage")String language){
-        languageService.uploadTermsLanguage(file, Language.valueOf(language));
+                                        @RequestParam(value = "selectedLanguage")String language,
+                                        @RequestParam(value = "selectMethod") String method){
+        languageService.uploadTermsLanguage(file, Language.valueOf(language), Method.valueOf(method));
 
         return "redirect:/";
     }

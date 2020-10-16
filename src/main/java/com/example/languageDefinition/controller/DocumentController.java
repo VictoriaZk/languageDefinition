@@ -16,8 +16,8 @@ public class DocumentController {
     private final DocumentService documentService;
 
     @GetMapping("{id}")
-    public String getDocument(@PathVariable("id") Long DocumentId, Model model){
-        model.addAttribute("document", documentService.findDocument(DocumentId));
+    public String getDocument(@PathVariable("id") Long documentId, Model model){
+        model.addAttribute("document", documentService.findDocument(documentId));
 
         return "document";
     }
